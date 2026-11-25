@@ -238,14 +238,14 @@
               <i data-feather="clock" class="h-3 w-3"></i> Monitoreo Agrometeorológico Continuo (8 Días)
             </div>
             <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <i data-feather="cloud-drizzle" class="text-sky-500 h-5 w-5"></i> Intensidad de Lluvia, Evapotranspiración (ET) y Radiación Solar
+              <i data-feather="cloud-drizzle" class="text-sky-500 h-5 w-5"></i> Intensidad y Precipitación Acumulada (8 Días)
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Hietograma multivariable. Utiliza la barra inferior para zoom/desplazamiento.
+              Hietograma de lluvia e intensidad. Utiliza la barra inferior para zoom y desplazamiento temporal.
             </p>
           </div>
           
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold self-start lg:self-auto">
+          <div class="grid grid-cols-2 gap-2 text-xs font-semibold self-start lg:self-auto">
             <div class="bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60">
               <span class="text-slate-400 text-[10px] block uppercase">Lluvia Acum.</span>
               <span id="hieto-kpi-cum" class="text-sky-600 dark:text-sky-400 font-bold text-sm">-- mm</span>
@@ -254,14 +254,8 @@
               <span class="text-slate-400 text-[10px] block uppercase">Pico Intensidad</span>
               <span id="hieto-kpi-peak" class="text-red-500 font-bold text-sm">-- mm/h</span>
             </div>
-            <div class="bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60">
-              <span class="text-slate-400 text-[10px] block uppercase">ET Acumulada</span>
-              <span id="hieto-kpi-et" class="text-emerald-500 font-bold text-sm">-- mm</span>
-            </div>
-            <div class="bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60">
-              <span class="text-slate-400 text-[10px] block uppercase">Máx Rad. Solar</span>
-              <span id="hieto-kpi-rad" class="text-amber-500 font-bold text-sm">-- W/m²</span>
-            </div>
+            <span id="hieto-kpi-et" class="hidden"></span>
+            <span id="hieto-kpi-rad" class="hidden"></span>
           </div>
         </div>
 
@@ -557,7 +551,8 @@
     const mesesMap = {
       'JAN': 'Enero', 'FEB': 'Febrero', 'MAR': 'Marzo', 'APR': 'Abril',
       'MAY': 'Mayo', 'JUN': 'Junio', 'JUL': 'Julio', 'AUG': 'Agosto',
-      'SEP': 'Septiembre', 'OCT': 'Octubre', 'NOV': 'Noviembre', 'DEC': 'Diciembre'
+      'SEP': 'Septiembre', 'OCT': 'Octubre', 'NOV': 'Noviembre', 'DEC': 'Diciembre',
+      'ENE': 'Enero', 'ABR': 'Abril', 'AGO': 'Agosto', 'DIC': 'Diciembre'
     };
     const mesesNombresArray = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -689,105 +684,77 @@
       const timeX = [];
       const intensityY = [];
       const cumRainY = [];
-      const solarRadY = [];
-      const etY = [];
-      const cumEtY = [];
       
       let currentCum = 0;
-      let currentEtCum = 0;
       let maxRate = 0;
       let maxRateTime = '--';
-      let maxSolar = 0;
-      let maxSolarTime = '--';
 
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+        const line = lines[i].trim();
         if (!line || !line.includes('/')) continue;
-        if (line.includes('----------------') || line.includes('Date') || line.includes('Temp')) continue;
+        if (line.includes('----') || line.includes('Fecha') || line.includes('Date') || line.includes('Temp')) continue;
 
-        const dateStr = line.substring(0, 10).trim();
-        const timeStr = line.substring(10, 17).trim();
-        
-        const dateParts = dateStr.split('/');
+        const parts = line.split(/\s+/);
+        if (parts.length < 18) continue;
+
+        const dateParts = parts[0].split('/');
         if (dateParts.length !== 3) continue;
 
         const [d, m, y] = dateParts.map(Number);
         if (isNaN(d) || isNaN(m) || isNaN(y)) continue;
 
-        const timeParts = timeStr.split(':');
+        const timeStr = parts[1];
+        const isPm = /p/i.test(timeStr);
+        const isAm = /a/i.test(timeStr);
+        const cleanTime = timeStr.replace(/[^\d:]/g, '');
+        const timeParts = cleanTime.split(':');
         if (timeParts.length < 2) continue;
-        const [hh, mm] = timeParts.map(Number);
+        let hh = parseInt(timeParts[0], 10);
+        let mm = parseInt(timeParts[1], 10);
         if (isNaN(hh) || isNaN(mm)) continue;
+        if (isPm && hh < 12) hh += 12;
+        if (isAm && hh === 12) hh = 0;
 
         const pad = (n) => String(n).padStart(2, '0');
         const fullYear = 2000 + y;
         const isoDate = `${fullYear}-${pad(m)}-${pad(d)} ${pad(hh)}:${pad(mm)}:00`;
 
-        const rain = parseFloat(line.substring(117, 124).trim()) || 0;
-        const rate = parseFloat(line.substring(124, 131).trim()) || 0;
-        const solar = parseFloat(line.substring(131, 138).trim()) || 0;
-        const et = parseFloat(line.substring(210, 218).trim()) || 0;
+        const rain = (parts[16] !== '---' && !isNaN(parseFloat(parts[16]))) ? parseFloat(parts[16]) : 0;
+        const rate = (parts[17] !== '---' && !isNaN(parseFloat(parts[17]))) ? parseFloat(parts[17]) : 0;
 
         currentCum += rain;
-        currentEtCum += et;
 
         if (rate > maxRate) {
           maxRate = rate;
           maxRateTime = `${pad(d)}/${pad(m)} ${pad(hh)}:${pad(mm)}`;
         }
 
-        if (solar > maxSolar) {
-          maxSolar = solar;
-          maxSolarTime = `${pad(d)}/${pad(m)} ${pad(hh)}:${pad(mm)}`;
-        }
-
         timeX.push(isoDate);
         intensityY.push(rate);
         cumRainY.push(parseFloat(currentCum.toFixed(2)));
-        solarRadY.push(solar);
-        etY.push(et);
-        cumEtY.push(parseFloat(currentEtCum.toFixed(2)));
       }
 
       // Actualizar KPIs de la tarjeta
       const kpiCum = document.getElementById('hieto-kpi-cum');
       const kpiPeak = document.getElementById('hieto-kpi-peak');
-      const kpiEt = document.getElementById('hieto-kpi-et');
-      const kpiRad = document.getElementById('hieto-kpi-rad');
-
       if (kpiCum) kpiCum.innerText = `${currentCum.toFixed(1)} mm`;
       if (kpiPeak) {
         kpiPeak.innerText = maxRate > 0 ? `${maxRate.toFixed(1)} mm/h (${maxRateTime})` : '0.0 mm/h';
       }
-      if (kpiEt) kpiEt.innerText = `${currentEtCum.toFixed(2)} mm`;
-      if (kpiRad) {
-        kpiRad.innerText = maxSolar > 0 ? `${maxSolar.toFixed(0)} W/m²` : '0 W/m²';
-      }
 
-      return {
-        timeX,
-        intensityY,
-        cumRainY,
-        solarRadY,
-        etY,
-        cumEtY,
-        totalCum: parseFloat(currentCum.toFixed(2)),
-        totalEt: parseFloat(currentEtCum.toFixed(2)),
-        maxRate,
-        maxRateTime,
-        maxSolar
-      };
+      const res = { timeX, intensityY, cumRainY };
+      dataHietogramaCache = res;
+      return res;
     }
 
     function renderHietograma(data) {
       if (!data || !data.timeX || data.timeX.length === 0) return;
-      dataHietogramaCache = data;
 
       const isDark = document.documentElement.classList.contains('dark');
-      const textColor = isDark ? '#94a3b8' : '#64748b';
+      const textColor = isDark ? '#94a3b8' : '#475569';
       const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
-      const btnBg = isDark ? '#1e293b' : '#f1f5f9';
-      const btnActive = '#0284c7';
+      const btnBg = isDark ? '#1e293b' : '#e2e8f0';
+      const btnActive = isDark ? '#0284c7' : '#0284c7';
 
       const traceIntensity = {
         x: data.timeX,
@@ -807,29 +774,6 @@
         yaxis: 'y2',
         line: { color: '#f43f5e', width: 2.5 },
         hovertemplate: '%{x}<br><b>Lluvia Acum:</b> %{y:.2f} mm<extra></extra>'
-      };
-
-      const traceSolar = {
-        x: data.timeX,
-        y: data.solarRadY,
-        name: 'Rad. Solar (W/m²)',
-        type: 'scatter',
-        mode: 'lines',
-        yaxis: 'y3',
-        visible: 'legendonly',
-        line: { color: '#f59e0b', width: 1.5 },
-        hovertemplate: '%{x}<br><b>Rad. Solar:</b> %{y:.0f} W/m²<extra></extra>'
-      };
-
-      const traceET = {
-        x: data.timeX,
-        y: data.cumEtY,
-        name: 'ET Acumulada (mm)',
-        type: 'scatter',
-        mode: 'lines',
-        yaxis: 'y2',
-        line: { color: '#10b981', width: 2, dash: 'dot' },
-        hovertemplate: '%{x}<br><b>ET Acum:</b> %{y:.2f} mm<extra></extra>'
       };
 
       const layout = {
@@ -867,7 +811,7 @@
           }
         },
         yaxis: {
-          title: { text: 'Lluvia (mm/h)', font: { color: '#0284c7', size: 11 } },
+          title: { text: 'Intensidad (mm/h)', font: { color: '#0284c7', size: 11 } },
           tickfont: { color: '#0284c7', size: 10 },
           gridcolor: gridColor,
           rangemode: 'tozero'
@@ -879,26 +823,16 @@
           side: 'right',
           showgrid: false,
           rangemode: 'tozero'
-        },
-        yaxis3: {
-          title: { text: 'Solar (W/m²)', font: { color: '#f59e0b', size: 11 } },
-          tickfont: { color: '#f59e0b', size: 10 },
-          overlaying: 'y',
-          side: 'right',
-          position: 0.95,
-          showgrid: false,
-          visible: false
         }
       };
 
       const config = {
         responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+        displayModeBar: false,
+        displaylogo: false
       };
 
-      Plotly.react('chartHietograma', [traceIntensity, traceCum, traceET, traceSolar], layout, config);
+      Plotly.react('chartHietograma', [traceIntensity, traceCum], layout, config);
     }
 
     function actualizarTemaHietograma() {
@@ -916,7 +850,7 @@
       let anio = "";
 
       for (const line of lines.slice(0, 10)) {
-        const headerMatch = line.match(/for\s+([A-Z]{3,4})\.?\s+(\d{4})/i);
+        const headerMatch = line.match(/(?:for|para)\s+([A-Z]{3,4})\.?\s+(\d{4})/i);
         if (headerMatch) {
           const cod = headerMatch[1].toUpperCase();
           anio = headerMatch[2];
@@ -928,7 +862,7 @@
 
       let startIdx = -1, endIdx = -1;
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes('----------------------------------------------------')) {
+        if (/^-{20,}/.test(lines[i].trim())) {
           if (startIdx === -1) startIdx = i;
           else { endIdx = i; break; }
         }
@@ -947,6 +881,7 @@
       let rainDaysCount = 0;
       let maxWind = 0, maxWindDay = '--', maxWindTime = '--', maxWindDir = '--';
       let sumMeanTemp = 0;
+      let countMeanTemp = 0;
 
       if (startIdx !== -1 && endIdx !== -1) {
         for (let i = startIdx + 1; i < endIdx; i++) {
@@ -956,14 +891,14 @@
           
           if (parts.length >= 11 && !isNaN(parts[0])) {
             const day = parseInt(parts[0], 10);
-            const tMean = parseFloat(parts[1]);
-            const tMax = parseFloat(parts[2]);
+            const tMean = (parts[1] !== '---' && !isNaN(parseFloat(parts[1]))) ? parseFloat(parts[1]) : null;
+            const tMax = (parts[2] !== '---' && !isNaN(parseFloat(parts[2]))) ? parseFloat(parts[2]) : null;
             const tMaxTime = parts[3] || '--';
-            const tMin = parseFloat(parts[4]);
+            const tMin = (parts[4] !== '---' && !isNaN(parseFloat(parts[4]))) ? parseFloat(parts[4]) : null;
             const tMinTime = parts[5] || '--';
-            const pRain = parseFloat(parts[8]) || 0;
-            const wAvg = parseFloat(parts[9]) || 0;
-            const wHigh = parseFloat(parts[10]) || 0;
+            const pRain = (parts[8] !== '---' && !isNaN(parseFloat(parts[8]))) ? parseFloat(parts[8]) : 0;
+            const wAvg = (parts[9] !== '---' && !isNaN(parseFloat(parts[9]))) ? parseFloat(parts[9]) : 0;
+            const wHigh = (parts[10] !== '---' && !isNaN(parseFloat(parts[10]))) ? parseFloat(parts[10]) : 0;
             const wTime = parts[11] || '--';
             const wDir = parts[12] || '--';
 
@@ -976,16 +911,19 @@
             windHigh.push(wHigh);
             windDir.push(wDir);
 
-            sumMeanTemp += tMean;
+            if (tMean !== null) {
+              sumMeanTemp += tMean;
+              countMeanTemp++;
+            }
             sumRain += pRain;
             if (pRain > 0.2) rainDaysCount++;
 
-            if (tMax > maxTemp) {
+            if (tMax !== null && tMax > maxTemp) {
               maxTemp = tMax;
               maxTempDay = day;
               maxTempTime = tMaxTime;
             }
-            if (tMin < minTemp) {
+            if (tMin !== null && tMin < minTemp) {
               minTemp = tMin;
               minTempDay = day;
               minTempTime = tMinTime;
@@ -1002,28 +940,35 @@
             }
 
             rowsTable.push({
-              day, tMean, tMax, tMaxTime, tMin, tMinTime, pRain, wAvg, wHigh, wDir
+              day, tMean, tMax, tMaxTime, tMin, tMinTime,
+              pRain, wAvg, wHigh, wTime, wDir
             });
           }
         }
       }
 
-      const maxRainMatch = text.match(/Max Rain:\s*([\d.]+)\s*ON\s*([^\r\n]+)/i);
-      let maxRainDateStr = maxRain > 0 ? `Día ${maxRainDay}` : 'Sin lluvia';
-      if (maxRainMatch) maxRainDateStr = maxRainMatch[2].trim();
+      // Buscar Lluvia Máxima y Días de Lluvia desde el pie de NOAA si no hubo lluvias registradas
+      let maxRainDateStr = maxRain > 0 ? `Día ${maxRainDay}` : 'Sin registros';
+      for (const line of lines.slice(endIdx !== -1 ? endIdx : 0)) {
+        const m = line.match(/(?:Lluvia\s+M[áa]x|Max\s+Rain):?\s+([\d\.]+)\s+(?:EL|on)\s+(\S+)/i);
+        if (m) {
+          const rVal = parseFloat(m[1]);
+          const rDate = m[2];
+          if (rVal > maxRain) {
+            maxRain = rVal;
+            maxRainDateStr = rDate;
+          }
+        }
+      }
 
-      const daysRainMatch = text.match(/Days of Rain:\s*(\d+)/i);
-      if (daysRainMatch) rainDaysCount = parseInt(daysRainMatch[1], 10);
-
-      document.getElementById('badge-dias-mes').innerText = `${dias.length} días registrados`;
-
+      // Actualizar KPIs del Mes
       document.getElementById('kpi-mes-tmax').innerText = maxTemp !== -99 ? `${maxTemp.toFixed(1)} °C` : '-- °C';
       document.getElementById('kpi-mes-tmax-date').innerText = `Día ${maxTempDay} (${maxTempTime} hs)`;
 
       document.getElementById('kpi-mes-tmin').innerText = minTemp !== 99 ? `${minTemp.toFixed(1)} °C` : '-- °C';
       document.getElementById('kpi-mes-tmin-date').innerText = `Día ${minTempDay} (${minTempTime} hs)`;
 
-      const tMediaPeriodo = dias.length > 0 ? (sumMeanTemp / dias.length).toFixed(1) : '--';
+      const tMediaPeriodo = countMeanTemp > 0 ? (sumMeanTemp / countMeanTemp).toFixed(1) : '--';
       document.getElementById('kpi-mes-tmean').innerText = `${tMediaPeriodo} °C`;
 
       document.getElementById('kpi-mes-rain-total').innerText = `${sumRain.toFixed(1)} mm`;
@@ -1040,10 +985,10 @@
         tbody.innerHTML = rowsTable.map(r => `
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
             <td class="px-3 py-1.5 font-bold text-slate-800 dark:text-white">${r.day}</td>
-            <td class="px-3 py-1.5">${r.tMean.toFixed(1)}</td>
-            <td class="px-3 py-1.5 text-red-500 font-semibold">${r.tMax.toFixed(1)}</td>
+            <td class="px-3 py-1.5">${r.tMean !== null ? r.tMean.toFixed(1) : '--'}</td>
+            <td class="px-3 py-1.5 text-red-500 font-semibold">${r.tMax !== null ? r.tMax.toFixed(1) : '--'}</td>
             <td class="px-3 py-1.5 text-slate-400 text-[11px]">${r.tMaxTime}</td>
-            <td class="px-3 py-1.5 text-blue-500 font-semibold">${r.tMin.toFixed(1)}</td>
+            <td class="px-3 py-1.5 text-blue-500 font-semibold">${r.tMin !== null ? r.tMin.toFixed(1) : '--'}</td>
             <td class="px-3 py-1.5 text-slate-400 text-[11px]">${r.tMinTime}</td>
             <td class="px-3 py-1.5 ${r.pRain > 0 ? 'text-sky-500 font-bold' : 'text-slate-400'}">${r.pRain.toFixed(1)}</td>
             <td class="px-3 py-1.5">${r.wAvg.toFixed(1)}</td>
@@ -1056,9 +1001,6 @@
       return { dias, tempMean, tempMax, tempMin, rain, windAvg, windHigh };
     }
 
-    // =========================================================================
-    // PARSER: NOAAYR.TXT (Anual)
-    // =========================================================================
     function parseNOAAAnual(text) {
       const lines = text.split(/\r?\n/);
       
@@ -1067,26 +1009,26 @@
       let idxWindStart = -1, idxWindEnd = -1;
 
       for (let i = 0; i < lines.length; i++) {
-        const l = lines[i];
-        if (l.includes('TEMPERATURE (') && idxTempStart === -1) {
+        const l = lines[i].toUpperCase();
+        if ((l.includes('TEMPERATURE (') || l.includes('TEMPERATURA (')) && idxTempStart === -1) {
           for (let j = i; j < lines.length; j++) {
-            if (lines[j].includes('----------------------------------------------------')) {
+            if (/^-{20,}/.test(lines[j].trim())) {
               if (idxTempStart === -1) idxTempStart = j;
               else { idxTempEnd = j; break; }
             }
           }
         }
-        if (l.includes('PRECIPITATION (') && idxRainStart === -1) {
+        if ((l.includes('PRECIPITATION (') || l.includes('PRECIPITACION (') || l.includes('PRECIPITACIÓN (')) && idxRainStart === -1) {
           for (let j = i; j < lines.length; j++) {
-            if (lines[j].includes('---------------------------------------------')) {
+            if (/^-{20,}/.test(lines[j].trim())) {
               if (idxRainStart === -1) idxRainStart = j;
               else { idxRainEnd = j; break; }
             }
           }
         }
-        if (l.includes('WIND SPEED (') && idxWindStart === -1) {
+        if ((l.includes('WIND SPEED (') || l.includes('VELOCIDAD DEL VIENTO')) && idxWindStart === -1) {
           for (let j = i; j < lines.length; j++) {
-            if (lines[j].includes('---------------------------------')) {
+            if (/^-{20,}/.test(lines[j].trim())) {
               if (idxWindStart === -1) idxWindStart = j;
               else { idxWindEnd = j; break; }
             }
@@ -1236,7 +1178,7 @@
       document.getElementById('badge-meses-anio').innerText = `${meses.length} meses registrados`;
 
       document.getElementById('kpi-yr-rain-total').innerText = `${totRainAnnual.toFixed(1)} mm`;
-      document.getElementById('kpi-yr-rain-maxday').innerText = `Máx 24h: ${totRainMaxDay} mm (${totRainMaxMonth})`;
+      document.getElementById('kpi-yr-rain-maxday').innerText = `Máx 24h: ${totRainMaxDay} mm (${mesesMap[totRainMaxMonth] || totRainMaxMonth})`;
 
       document.getElementById('kpi-yr-tmax').innerText = `${totHi} °C`;
       document.getElementById('kpi-yr-tmax-date').innerText = `Mes: ${mesesMap[totHiMonth] || totHiMonth}`;
@@ -1280,14 +1222,14 @@
           <td class="px-3 py-2 text-amber-500">${totMeanMax}</td>
           <td class="px-3 py-2 text-sky-400">${totMeanMin}</td>
           <td class="px-3 py-2">${totMean}</td>
-          <td class="px-3 py-2 text-red-500 font-black">${totHi} (${totHiMonth})</td>
-          <td class="px-3 py-2 text-blue-500 font-black">${totLow} (${totLowMonth})</td>
+          <td class="px-3 py-2 text-red-500 font-black">${totHi} (${mesesMap[totHiMonth] || totHiMonth})</td>
+          <td class="px-3 py-2 text-blue-500 font-black">${totLow} (${mesesMap[totLowMonth] || totLowMonth})</td>
           <td class="px-3 py-2 text-orange-500">${totDaysHeat}</td>
           <td class="px-3 py-2 text-sky-500 font-black">${totRainAnnual.toFixed(1)}</td>
-          <td class="px-3 py-2">${totRainMaxDay} (${totRainMaxMonth})</td>
+          <td class="px-3 py-2">${totRainMaxDay} (${mesesMap[totRainMaxMonth] || totRainMaxMonth})</td>
           <td class="px-3 py-2">${totRainDays}</td>
           <td class="px-3 py-2">${totWindAvg}</td>
-          <td class="px-3 py-2 text-emerald-500 font-black">${totWindHi} (${totWindHiMonth})</td>
+          <td class="px-3 py-2 text-emerald-500 font-black">${totWindHi} (${mesesMap[totWindHiMonth] || totWindHiMonth})</td>
         </tr>
       `;
 
@@ -1297,9 +1239,6 @@
       };
     }
 
-    // =========================================================================
-    // RENDERIZADO DE GRÁFICOS (Chart.js)
-    // =========================================================================
     function renderGraficosMes(data) {
       const { textColor, gridColor } = getChartThemeColors();
 
