@@ -1,12 +1,12 @@
-                            ANNUAL CLIMATOLOGICAL SUMMARY
+                            RESUMEN CLIMATOLÓGICO ANUAL
 
-NAME: ema_SPMF  CITY:    STATE:   
-ELEV:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
+NOMBRE: ema_SPMF  CIUDAD:    PROVINCIA:   
+ALT:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
 
-               TEMPERATURE (°C), HEAT BASE 18.3, COOL BASE 18.3
-                          DEP.  HEAT  COOL                                          
-        MEAN  MEAN        FROM  DEG   DEG                        MAX  MAX  MIN  MIN 
- YR MO  MAX   MIN   MEAN  NORM  DAYS  DAYS  HI  DATE  LOW  DATE  >=32 <=0  <=0  <=-18 
+               TEMPERATURA (°C), BASE CALOR 18.3, BASE FRIO 18.3
+                          DESV  GRAD  GRAD                                          
+        MEDIA MEDIA       RESP  DIA   DIA                        MAX  MAX  MIN  MIN 
+AÑO MES MAX   MIN   MEDIA NORM  CAL.  FRIO  MAX FECHA MIN  FECHA >=32 <=0  <=0  <=-18 
 ------------------------------------------------------------------------------------
  25  1  30.6  17.7  22.6   0.0     7   139  34.9  17  12.8   16   10    0    0    0
  25  2  32.5   8.1  22.9   0.0    11   116  70.0  25 -67.8   20   14    0    4    4
@@ -23,12 +23,12 @@ ELEV:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
 ------------------------------------------------------------------------------------
         25.9  10.6  18.2   0.0  1023   908  70.0 FEB -67.8  FEB   65    0   25    7
 
-                                PRECIPITATION (mm)
+                                PRECIPITACION (mm)
 
-               DEP.   MAX        DAYS OF RAIN 
-               FROM   OBS.          OVER
- YR MO  TOTAL  NORM   DAY  DATE  .2   2   20
----------------------------------------------
+               DESV   MAX        DIAS LLUVIA  
+               RESP   OBS.          MAS 
+AÑO MES TOTAL  NORM   DIA  FEC   .2   2   20
+--------------------------------------------
  25  1 286.4    0.0  59.8    3   25   16    5
  25  2 109.0    0.0  34.6   13   10    6    3
  25  3  53.6    0.0  11.2   24   19    6    0
@@ -41,12 +41,12 @@ ELEV:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
  25 10  68.6    0.0  31.8   16   11    7    1
  25 11  14.8    0.0   4.2   16    9    4    0
  25 12 209.8    0.0  47.4   30   20   10    4
----------------------------------------------
-       795.0   0.0  59.8  JAN  142   59   13
+--------------------------------------------
+       795.0   0.0  59.8  ENE  142   59   13
 
-                                WIND SPEED (km/hr)
-                          DOM
- YR MO   AVG.  HI   DATE  DIR
+                                VELOCIDAD DEL VIENTO (km/h)
+                          DIR
+AÑO MES  MED.  MAX  FECHA DOM
 ---------------------------------
  25  1   1.7  46.7   15   NNE
  25  2   1.5  30.6   10   NNE
@@ -61,4 +61,4 @@ ELEV:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
  25 11   2.9  41.8   26    NE
  25 12   2.3  35.4   21    NE
 ---------------------------------
-         1.9  90.1  APR   NE
+         1.9  90.1  ABR   NE
