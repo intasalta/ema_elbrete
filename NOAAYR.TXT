@@ -1,12 +1,12 @@
-                            RESUMEN CLIMATOLÓGICO ANUAL
+                            ANNUAL CLIMATOLOGICAL SUMMARY
 
-NOMBRE: ema_SPMF  CIUDAD:    PROVINCIA:   
-ALT:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
+NAME: ema_SPMF  CITY:    STATE:   
+ELEV:  1092 m  LAT:  24° 14' 13" S  LONG:  65° 10' 59" W
 
-               TEMPERATURA (°C), BASE CALOR 18.3, BASE FRIO 18.3
-                          DESV  GRAD  GRAD                                          
-        MEDIA MEDIA       RESP  DIA   DIA                        MAX  MAX  MIN  MIN 
-AÑO MES MAX   MIN   MEDIA NORM  CAL.  FRIO  MAX FECHA MIN  FECHA >=32 <=0  <=0  <=-18 
+               TEMPERATURE (°C), HEAT BASE 18.3, COOL BASE 18.3
+                          DEP.  HEAT  COOL                                          
+        MEAN  MEAN        FROM  DEG   DEG                        MAX  MAX  MIN  MIN 
+ YR MO  MAX   MIN   MEAN  NORM  DAYS  DAYS  HI  DATE  LOW  DATE  >=32 <=0  <=0  <=-18 
 ------------------------------------------------------------------------------------
  26  1  29.3  17.9  22.7   0.0     3   141  34.8   3  15.3    6    6    0    0    0
  26  2  29.9  18.1  23.1   0.0     5   139  36.1  19  13.3   25   10    0    0    0
@@ -21,14 +21,14 @@ AÑO MES MAX   MIN   MEDIA NORM  CAL.  FRIO  MAX FECHA MIN  FECHA >=32 <=0  <=0  
  26 11  31.2  19.7  25.4   0.0     5    76  70.0  27  11.9    6   12    0    0    0
  26 12
 ------------------------------------------------------------------------------------
-        24.8  13.4  19.5   0.0   468   651  70.0 MAR  -1.3  AGO   44    0    5    0
+        24.8  13.4  19.5   0.0   468   651  70.0 MAR  -1.3  AUG   44    0    5    0
 
-                                PRECIPITACION (mm)
+                                PRECIPITATION (mm)
 
-               DESV   MAX        DIAS LLUVIA  
-               RESP   OBS.          MAS 
-AÑO MES TOTAL  NORM   DIA  FEC   .2   2   20
---------------------------------------------
+               DEP.   MAX        DAYS OF RAIN 
+               FROM   OBS.          OVER
+ YR MO  TOTAL  NORM   DAY  DATE  .2   2   20
+---------------------------------------------
  26  1 127.1    0.0  39.6    3   22   10    1
  26  2  86.8    0.0  17.4   23   14   11    0
  26  3  56.8    0.0  22.8   10   15    7    1
@@ -41,12 +41,12 @@ AÑO MES TOTAL  NORM   DIA  FEC   .2   2   20
  26 10   9.4    0.0   4.6   25    6    2    0
  26 11   8.6    0.0   4.6   25    2    2    0
  26 12
---------------------------------------------
-       316.0   0.0  39.6  ENE   84   36    2
+---------------------------------------------
+       316.0   0.0  39.6  JAN   84   36    2
 
-                                VELOCIDAD DEL VIENTO (km/h)
-                          DIR
-AÑO MES  MED.  MAX  FECHA DOM
+                                WIND SPEED (km/hr)
+                          DOM
+ YR MO   AVG.  HI   DATE  DIR
 ---------------------------------
  26  1   1.7  33.8    3   NNE
  26  2   1.6  29.0   24    NE
